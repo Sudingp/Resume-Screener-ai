@@ -45,14 +45,14 @@ def _load_cached_results_if_available():
                 with open(results_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 _LATEST_RESULTS = [CandidateResult.model_validate(r) for r in data]
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 pass
         if summary_file.is_file():
             try:
                 with open(summary_file, "r", encoding="utf-8") as f:
                     sdata = json.load(f)
                 _LATEST_SUMMARY = BatchSummary.model_validate(sdata)
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 pass
 
 
@@ -223,5 +223,5 @@ async def screen_single_file(
         if tmp_path.exists():
             try:
                 tmp_path.unlink()
-            except Exception:
+            except OSError:
                 pass

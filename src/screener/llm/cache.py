@@ -72,5 +72,5 @@ class LLMCache:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                except Exception:
+                except OSError:
                     pass

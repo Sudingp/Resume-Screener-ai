@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-import random
+import secrets
 from typing import Any, Dict, Optional
 import httpx
 from screener.errors import LLMError
@@ -89,8 +89,9 @@ class GeminiClient(LLMClient):
                 last_error = e
 
             if attempt < max_attempts:
-                # Exponential backoff with jitter
-                sleep_time = (0.5 * (2 ** attempt)) + (random.uniform(0.1, 0.3))
+                # Exponential backoff with cryptographically safe jitter
+                jitter = secrets.SystemRandom().uniform(0.1, 0.3)
+                sleep_time = (0.5 * (2 ** attempt)) + jitter
                 await asyncio.sleep(sleep_time)
 
         raise last_error or LLMError("LLM extraction failed after retries", provider="gemini")

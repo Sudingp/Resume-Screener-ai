@@ -48,8 +48,8 @@ def parse_pdf(path: Path, max_pages: int = 10) -> ParsedDocument:
                             uri = annot.get("uri") or annot.get("A", {}).get("URI")
                             if uri:
                                 hyperlinks_set.add(str(uri).strip())
-                except Exception:
-                    # Non-fatal hyperlink extraction failure
+                except (KeyError, TypeError, ValueError, AttributeError):
+                    # Gracefully skip malformed individual hyperlink dictionary entries
                     pass
 
             full_text = "\n\n".join(extracted_text_chunks).strip()
