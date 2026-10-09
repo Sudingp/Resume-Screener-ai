@@ -269,8 +269,3 @@ python main.py --input ./resumes --output ./output/results.json --csv
 3. **Persistent Evaluation Benchmark:** Build a labeled benchmark dataset with human golden ranks to calibrate and tune weights automatically.
 4. **Celery / Redis Background Worker:** Transition batch screening into an asynchronous queue with progress WebSockets for large batches (> 1,000 resumes).
 
----
-
-## AI Assistance Note
-
-This system was designed, structured, and implemented with the assistance of Google Antigravity paired programming according to the Kasparro engineering assessment blueprint.
