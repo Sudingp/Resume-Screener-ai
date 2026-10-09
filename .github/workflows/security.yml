@@ -41,6 +41,10 @@ jobs:
           echo "Auditing Python dependencies for known vulnerabilities..."
           pip-audit
 
+      - name: Generate synthetic test fixtures
+        run: |
+          python tests/fixtures/make_fixtures.py
+
       - name: Run Pytest Test Suite
         env:
           PYTHONPATH: src
@@ -63,7 +67,7 @@ jobs:
 
       - name: Install and Audit Node Dependencies
         run: |
-          npm install --package-lock-only || true
+          npm install || true
           echo "Running npm audit for frontend dependencies..."
           npm audit --audit-level=moderate || true
 
@@ -81,6 +85,4 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           extra_args: --only-verified

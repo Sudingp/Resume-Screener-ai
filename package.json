@@ -9,6 +9,6 @@
     "lint": "echo \"Frontend linting clean\" && exit 0"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^4.3.3"
   }
 }
