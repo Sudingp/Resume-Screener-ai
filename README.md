@@ -166,8 +166,13 @@ python main.py --input ./resumes --output ./output/results.json --concurrency 4 
 The project includes a production-grade FastAPI application in `src/screener/api.py`.
 
 ### Start the API Server
+You can launch the server using either:
 ```bash
-uvicorn screener.api:app --host 127.0.0.1 --port 8000 --reload
+# Option 1: Direct launcher script
+python run_api.py
+
+# Option 2: Using uvicorn CLI with src app directory
+uvicorn screener.api:app --app-dir src --host 127.0.0.1 --port 8000 --reload
 ```
 Interactive Swagger documentation is available at `http://127.0.0.1:8000/docs`.
 
