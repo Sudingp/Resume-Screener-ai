@@ -1,0 +1,18 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local configuration and caches
+.env
+.cache/
+
+# Application datasets and outputs (do not commit real resumes or outputs containing PII)
+output/
+resumes/

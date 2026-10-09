@@ -1,0 +1,156 @@
+# Lexicons for deterministic eligibility, skill extraction, and heuristic fallback
+
+eligibility:
+  medium_requires_verb: true
+  classical_ml_counts: false
+
+  python_patterns:
+    - '\bpython\b'
+    - '\bfastapi\b'
+    - '\bdjango\b'
+    - '\bflask\b'
+    - '\bpandas\b'
+    - '\bnumpy\b'
+    - '\bscikit-learn\b'
+    - '\bpytorch\b'
+
+  # Strong AI terms (any one is sufficient for ai_ok)
+  strong_ai_terms:
+    - '\blangchain\b'
+    - '\blanggraph\b'
+    - '\bllamaindex\b'
+    - '\bgoogle adk\b'
+    - '\bagent development kit\b'
+    - '\bcrewai\b'
+    - '\bautogen\b'
+    - '\bsemantic kernel\b'
+    - '\bhaystack\b'
+    - '\bRAG\b'  # Note: case-sensitive flag will be checked for RAG
+    - 'retrieval[\s-]augmented generation'
+    - 'vector (?:search|database|store|stores|databases)'
+    - '\bembeddings\b'
+    - '\bfaiss\b'
+    - '\bchroma(?:db)?\b'
+    - '\bpinecone\b'
+    - '\bweaviate\b'
+    - '\bqdrant\b'
+    - '\bpgvector\b'
+    - '\bmilvus\b'
+    - 'tool[\s-]calling'
+    - 'function[\s-]calling'
+    - 'multi[\s-]agent'
+    - '\bagentic\b'
+    - '(?:ai|llm)[\s-]agents?'
+    - 'model context protocol'
+    - '\bmcp\b'
+
+  # Medium AI terms (require an implementation verb on the same line if medium_requires_verb is true)
+  medium_ai_terms:
+    - '\bllms?\b'
+    - '\bgenai\b'
+    - 'generative ai'
+    - '\bopenai\b'
+    - '\banthropic\b'
+    - 'claude(?: api)?'
+    - 'gemini(?: api| model)?'
+    - '\bgpt[- ]?[345o]\b'
+    - 'hugging[\s-]?face'
+    - '\btransformers\b'
+    - 'prompt engineering'
+    - 'fine[\s-]tuning(?: an? llm)?'
+
+  # Weak terms (never sufficient on their own)
+  weak_ai_terms:
+    - 'machine learning'
+    - 'deep learning'
+    - '\bnlp\b'
+    - 'natural language processing'
+    - 'computer vision'
+    - 'scikit-learn'
+    - 'tensorflow'
+    - 'pytorch'
+    - '\bai\b'
+    - '\bchatbots?\b'
+
+  implementation_verbs:
+    - 'built'
+    - 'developed'
+    - 'implemented'
+    - 'designed'
+    - 'integrated'
+    - 'created'
+    - 'deployed'
+    - 'using'
+    - 'powered'
+    - 'with'
+    - 'engineered'
+    - 'architected'
+    - 'trained'
+    - 'fine-tuned'
+    - 'tuned'
+
+# Skills catalog for matched_skills extraction (compiled for all candidates)
+skills_catalog:
+  - Python
+  - FastAPI
+  - Django
+  - Flask
+  - PyTorch
+  - TensorFlow
+  - scikit-learn
+  - LangChain
+  - LangGraph
+  - LlamaIndex
+  - Hugging Face
+  - CrewAI
+  - AutoGen
+  - RAG
+  - Vector Databases
+  - FAISS
+  - ChromaDB
+  - Pinecone
+  - Docker
+  - Kubernetes
+  - PostgreSQL
+  - MySQL
+  - SQLite
+  - Redis
+  - MongoDB
+  - GCP
+  - AWS
+  - Azure
+  - React
+  - Next.js
+  - TypeScript
+  - JavaScript
+  - Java
+  - Spring Boot
+  - Git
+  - CI/CD
+  - REST API
+  - GraphQL
+  - Celery
+  - RabbitMQ
+  - Kafka
+  - ElasticSearch
+
+# Signal patterns for scoring / heuristic fallback
+signal_patterns:
+  python: ['\bpython\b']
+  fastapi: ['\bfastapi\b']
+  flask_django: ['\bdjango\b', '\bflask\b']
+  async_programming: ['\basyncio\b', '\basynchronous\b', '\basync\s+def\b', '\bawait\b', '\bconcurrency\b']
+  postgresql: ['\bpostgres(?:ql)?\b']
+  other_sql: ['\bmysql\b', '\bsqlite\b', '\bsql\b']
+  redis: ['\bredis\b']
+  gcp: ['\bgcp\b', 'google cloud(?: platform)?']
+  other_cloud: ['\baws\b', 'amazon web services', '\bazure\b']
+  docker: ['\bdocker\b', '\bcontainers?\b', '\bcontainerization\b']
+  deployment: ['\bkubernetes\b', '\bk8s\b', '\bdeployed\b', '\bdeployment\b', '\bterraform\b', '\bansible\b']
+  ci_cd: ['\bci[\s/-]?cd\b', 'github actions', '\bjenkins\b', '\bgitlab[\s-]ci\b']
+  react_nextjs: ['\breact(?:js)?\b', '\bnext(?:\.js|js)?\b']
+  testing: ['\bpytest\b', '\bunit\s*test(?:ing|s)?\b', '\bmock(?:ing)?\b', '\btdd\b', '\bintegration\s*test(?:ing|s)?\b']
+  architecture_design: ['microservices', 'clean architecture', 'system design', 'distributed systems', 'event[\s-]driven']
+  caching_queues: ['\bcaching\b', '\bcelery\b', '\brabbitmq\b', '\bkafka\b', '\bmessage queue\b']
+  observability: ['prometheus', 'grafana', 'opentelemetry', 'datadog', 'logging', 'tracing', 'sentry']
+  concurrency_failure_handling: ['circuit breaker', 'retry logic', 'rate limit(?:ing)?', 'backoff', 'dead letter queue', 'fault tolerant']

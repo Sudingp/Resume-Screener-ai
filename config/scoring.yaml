@@ -1,0 +1,81 @@
+# Scoring rubric configuration
+# Weights must sum to 100
+category_weights:
+  ai_project_depth: 40
+  python_backend: 30
+  cloud_fullstack: 15
+  github: 10
+  engineering_depth: 5
+
+ai_project_depth:
+  capabilities:
+    llm_call: 6
+    retrieval_rag: 9
+    tool_calling: 9
+    multi_agent: 9  # tool_calling or multi_agent counted once (max 9)
+    state_orchestration: 7
+    evaluation_guardrails: 5
+    business_logic_data: 4
+  skills_only_max: 4
+  category_cap: 40
+
+python_backend:
+  # [applied, skills_only]
+  credits:
+    python: [8, 3]
+    fastapi: [7, 3]
+    flask_django: [4, 2]
+    async_programming: [5, 2]
+    postgresql: [5, 2]
+    other_sql: [3, 1]
+    redis: [5, 2]
+  category_cap: 30
+
+cloud_fullstack:
+  credits:
+    gcp: [5, 2]
+    other_cloud: [3, 1]
+    docker: [4, 1]
+    deployment: [3, 0]
+    ci_cd: [3, 0]
+    react_nextjs: [3, 1]
+  category_cap: 15
+
+github:
+  activity_max: 5
+  repos_max: 5
+  category_cap: 10
+  min_repo_size_kb: 50
+  recency_days:
+    tier1: [30, 3]
+    tier2: [90, 2]
+    tier3: [180, 1]
+  active_weeks_90d:
+    tier1: [4, 2]
+    tier2: [1, 1]
+  maintained_repos_365d:
+    tier1: [3, 2]
+    tier2: [1, 1]
+  relevant_repos:
+    tier1: [2, 2]
+    tier2: [1, 1]
+
+engineering_depth:
+  points_per_applied_signal: 1
+  signals:
+    - testing
+    - architecture_design
+    - caching_queues
+    - observability
+    - concurrency_failure_handling
+  category_cap: 5
+
+penalties:
+  thin_wrapper_penalty: -10
+  tutorial_style_penalty: -5
+  max_total_penalty: 15
+
+thresholds:
+  no_meaningful_ai_threshold: 12
+  no_meaningful_ai_cap: 55
+  heuristic_ai_depth_cap: 24
