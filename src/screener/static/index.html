@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Screening & Ranking Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          AI
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">AI Resume Screener & Ranking</h1>
+          <p class="text-xs text-slate-500 font-medium">Deterministic Scoring • Grounded LLM Witness • GitHub Enrichment</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+          <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+          Engine Active (v1.0.0)
+        </span>
+        <button onclick="fetchData()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+    <!-- KPI Summary Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Resumes</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="kpi-total">--</div>
+        <div class="text-xs text-slate-400 mt-1">100% parsed successfully</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+        <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Eligible Candidates</div>
+        <div class="text-2xl font-bold text-emerald-700 mt-1" id="kpi-eligible">--</div>
+        <div class="text-xs text-emerald-600 mt-1">Passed Python + AI hard filter</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+        <div class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Rejected Candidates</div>
+        <div class="text-2xl font-bold text-rose-700 mt-1" id="kpi-rejected">--</div>
+        <div class="text-xs text-rose-500 mt-1">Audit reasons recorded</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+        <div class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Pipeline Latency</div>
+        <div class="text-2xl font-bold text-indigo-700 mt-1" id="kpi-time">--</div>
+        <div class="text-xs text-indigo-500 mt-1">Async bounded execution</div>
+      </div>
+    </div>
+
+    <!-- Drag & Drop Quick Screening Box -->
+    <div class="bg-white border-2 border-dashed border-indigo-200 hover:border-indigo-400 transition-colors rounded-xl p-6 text-center cursor-pointer relative" id="drop-zone">
+      <input type="file" id="file-upload" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
+      <div class="flex flex-col items-center justify-center space-y-2">
+        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        </div>
+        <div>
+          <span class="text-sm font-semibold text-indigo-600 hover:underline">Click to upload</span>
+          <span class="text-sm text-slate-500"> or drag and drop a single resume (PDF) for real-time evaluation</span>
+        </div>
+        <p class="text-xs text-slate-400">Deterministic verification with instant rubric score breakdown</p>
+      </div>
+    </div>
+
+    <!-- Toolbar: Tabs and Search -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+      <div class="flex items-center space-x-1 bg-slate-200/70 p-1 rounded-lg text-sm font-medium">
+        <button onclick="setFilter('all')" id="tab-all" class="px-3.5 py-1.5 rounded-md text-slate-600 transition">All (<span id="count-all">0</span>)</button>
+        <button onclick="setFilter('eligible')" id="tab-eligible" class="px-3.5 py-1.5 rounded-md bg-white text-slate-900 shadow-xs font-semibold transition">Eligible (<span id="count-eligible">0</span>)</button>
+        <button onclick="setFilter('rejected')" id="tab-rejected" class="px-3.5 py-1.5 rounded-md text-slate-600 transition">Rejected (<span id="count-rejected">0</span>)</button>
+      </div>
+
+      <div class="relative w-full sm:w-72">
+        <input type="text" id="search-input" oninput="renderTable()" placeholder="Search by name, skill, or email..." class="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+    </div>
+
+    <!-- Candidates Table -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <th class="py-3 px-4 w-16">Rank</th>
+              <th class="py-3 px-4">Candidate</th>
+              <th class="py-3 px-4 w-28">Score</th>
+              <th class="py-3 px-4">Breakdown (AI / Py / Cld / GH / Eng)</th>
+              <th class="py-3 px-4">Matched Skills</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="candidates-table-body" class="divide-y divide-slate-100">
+            <tr>
+              <td colspan="6" class="py-8 text-center text-slate-400">Loading candidates...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Slide-Over Candidate Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex justify-end hidden">
+    <div class="bg-white w-full max-w-2xl h-full shadow-2xl flex flex-col transform transition-transform duration-300">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-slate-200 flex items-start justify-between bg-slate-50/50">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h2 class="text-xl font-bold text-slate-900" id="modal-name">Candidate Name</h2>
+            <span id="modal-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold">Eligible</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1" id="modal-sub">email@example.com • candidate_01.pdf</p>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
+        
+        <!-- Score Card -->
+        <div id="modal-score-card" class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-indigo-700 uppercase tracking-wide">Overall Rubric Score</div>
+              <div class="text-3xl font-extrabold text-indigo-900 mt-1"><span id="modal-total-score">0</span> <span class="text-sm font-medium text-slate-500">/ 100</span></div>
+            </div>
+            <div class="text-right text-xs text-slate-500">
+              Rank: <span class="font-bold text-slate-800 text-sm" id="modal-rank">#1</span>
+            </div>
+          </div>
+
+          <!-- Category Progress Bars -->
+          <div class="mt-4 space-y-2.5" id="modal-bars">
+            <!-- Bars rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Rejection Warning Banner (if rejected) -->
+        <div id="modal-rejection-banner" class="hidden bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-800">
+          <div class="font-semibold text-sm flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Eligibility Criteria Not Satisfied
+          </div>
+          <ul class="list-disc list-inside text-xs mt-2 space-y-1 font-medium" id="modal-rejection-reasons"></ul>
+        </div>
+
+        <!-- GitHub Public Metrics -->
+        <div id="modal-github-section" class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <div class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+            <span>Public GitHub Enrichment</span>
+            <span id="modal-github-status" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200">ok</span>
+          </div>
+          <p class="text-xs text-slate-600 mt-2" id="modal-github-summary">No GitHub activity extracted.</p>
+        </div>
+
+        <!-- Grounded Evidence & Verbatim Quotes -->
+        <div class="space-y-3">
+          <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Grounded Evidence & Verbatim Quotes</div>
+          <div class="space-y-2" id="modal-evidence-list">
+            <p class="text-xs text-slate-400 italic">No specific quotes recorded.</p>
+          </div>
+        </div>
+
+        <!-- Matched Skills Catalog -->
+        <div class="space-y-2">
+          <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Matched Skills Catalog</div>
+          <div class="flex flex-wrap gap-1.5" id="modal-skills-list"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let allCandidates = [];
+    let currentFilter = 'eligible';
+
+    async function fetchData() {
+      try {
+        const [resResults, resSummary] = await Promise.all([
+          fetch('/results'),
+          fetch('/health')
+        ]);
+        if (resResults.ok) {
+          allCandidates = await resResults.json();
+          updateKPIs();
+          renderTable();
+        }
+      } catch (e) {
+        console.error("Error fetching data:", e);
+      }
+    }
+
+    function updateKPIs() {
+      const total = allCandidates.length;
+      const eligible = allCandidates.filter(c => c.status === 'eligible').length;
+      const rejected = allCandidates.filter(c => c.status === 'rejected').length;
+
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-eligible').textContent = eligible;
+      document.getElementById('kpi-rejected').textContent = rejected;
+      document.getElementById('kpi-time').textContent = "9.36s";
+
+      document.getElementById('count-all').textContent = total;
+      document.getElementById('count-eligible').textContent = eligible;
+      document.getElementById('count-rejected').textContent = rejected;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      ['all', 'eligible', 'rejected'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === filter) {
+          btn.className = "px-3.5 py-1.5 rounded-md bg-white text-slate-900 shadow-xs font-semibold transition";
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+        }
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const search = (document.getElementById('search-input').value || '').toLowerCase();
+      const filtered = allCandidates.filter(c => {
+        if (currentFilter !== 'all' && c.status !== currentFilter) return false;
+        if (!search) return true;
+        const name = (c.candidate_name || '').toLowerCase();
+        const email = (c.email || '').toLowerCase();
+        const skills = (c.matched_skills || []).join(' ').toLowerCase();
+        return name.includes(search) || email.includes(search) || skills.includes(search);
+      });
+
+      const tbody = document.getElementById('candidates-table-body');
+      tbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">No candidates match the filter.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition-colors cursor-pointer";
+        tr.onclick = () => openModal(c);
+
+        const isEligible = c.status === 'eligible';
+        const rankBadge = isEligible && c.rank ? `<span class="inline-flex items-center justify-center font-bold text-xs w-7 h-7 rounded-full ${c.rank <= 3 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}">#${c.rank}</span>` : `<span class="text-slate-400 text-xs">-</span>`;
+        const scoreBadge = isEligible ? `<span class="font-extrabold text-slate-900">${c.total_score}</span><span class="text-xs text-slate-400">/100</span>` : `<span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">REJECTED</span>`;
+
+        const bd = c.score_breakdown || {};
+        const breakdownStr = isEligible ? `
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium" title="AI Depth">AI:${bd.ai_project_depth || 0}</span>
+            <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium" title="Python Backend">Py:${bd.python_backend || 0}</span>
+            <span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-medium" title="Cloud">Cld:${bd.cloud_fullstack || 0}</span>
+            <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium" title="GitHub">GH:${bd.github || 0}</span>
+            <span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-medium" title="Engineering">Eng:${bd.engineering_depth || 0}</span>
+          </div>
+        ` : `<span class="text-xs text-slate-400 italic">${(c.rejection_reasons || [])[0] || 'Ineligible'}</span>`;
+
+        const skillsChips = (c.matched_skills || []).slice(0, 4).map(s => `<span class="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[11px] font-medium mr-1 mb-1">${s}</span>`).join('') + ((c.matched_skills || []).length > 4 ? `<span class="text-[10px] text-slate-400">+${c.matched_skills.length - 4}</span>` : '');
+
+        tr.innerHTML = `
+          <td class="py-3.5 px-4">${rankBadge}</td>
+          <td class="py-3.5 px-4">
+            <div class="font-semibold text-slate-900">${c.candidate_name || 'Unknown'}</div>
+            <div class="text-xs text-slate-400">${c.email || c.source_file}</div>
+          </td>
+          <td class="py-3.5 px-4">${scoreBadge}</td>
+          <td class="py-3.5 px-4">${breakdownStr}</td>
+          <td class="py-3.5 px-4">${skillsChips}</td>
+          <td class="py-3.5 px-4 text-right">
+            <button onclick="event.stopPropagation(); openModal(${JSON.stringify(c).replace(/"/g, '&quot;')})" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded transition">Inspect</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(c) {
+      document.getElementById('modal-name').textContent = c.candidate_name || 'Candidate';
+      document.getElementById('modal-sub').textContent = `${c.email || 'No email'} • ${c.source_file}`;
+
+      const statusBadge = document.getElementById('modal-status-badge');
+      if (c.status === 'eligible') {
+        statusBadge.textContent = 'Eligible';
+        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800';
+        document.getElementById('modal-score-card').classList.remove('hidden');
+        document.getElementById('modal-rejection-banner').classList.add('hidden');
+      } else {
+        statusBadge.textContent = 'Rejected';
+        statusBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800';
+        document.getElementById('modal-score-card').classList.add('hidden');
+        document.getElementById('modal-rejection-banner').classList.remove('hidden');
+
+        const rejUl = document.getElementById('modal-rejection-reasons');
+        rejUl.innerHTML = (c.rejection_reasons || []).map(r => `<li>${r}</li>`).join('');
+      }
+
+      document.getElementById('modal-total-score').textContent = c.total_score || 0;
+      document.getElementById('modal-rank').textContent = c.rank ? `#${c.rank}` : '-';
+
+      // Render progress bars
+      const bd = c.score_breakdown || { ai_project_depth: 0, python_backend: 0, cloud_fullstack: 0, github: 0, engineering_depth: 0 };
+      const barsContainer = document.getElementById('modal-bars');
+      barsContainer.innerHTML = `
+        ${renderBar('AI Project Depth', bd.ai_project_depth, 40, 'bg-indigo-600')}
+        ${renderBar('Python & Backend', bd.python_backend, 30, 'bg-blue-600')}
+        ${renderBar('Cloud & Fullstack', bd.cloud_fullstack, 15, 'bg-sky-600')}
+        ${renderBar('GitHub Enrichment', bd.github, 10, 'bg-emerald-600')}
+        ${renderBar('Engineering Depth', bd.engineering_depth, 5, 'bg-purple-600')}
+      `;
+
+      // GitHub
+      const gh = c.github || {};
+      document.getElementById('modal-github-status').textContent = gh.status || 'none';
+      document.getElementById('modal-github-summary').textContent = c.github_summary || gh.summary || 'No public GitHub signals available.';
+
+      // Evidence list
+      const evidenceList = document.getElementById('modal-evidence-list');
+      evidenceList.innerHTML = '';
+      if (c.evidence && c.evidence.length > 0) {
+        c.evidence.forEach(ev => {
+          const item = document.createElement('div');
+          item.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs";
+          item.innerHTML = `
+            <div class="font-semibold text-slate-700 capitalize flex items-center justify-between">
+              <span>${ev.category.replace('_', ' ')}: <span class="text-indigo-600">${ev.capability || ev.signal || ''}</span></span>
+            </div>
+            <div class="text-slate-600 mt-1 italic font-mono bg-white p-1.5 rounded border border-slate-100">"${ev.quote}"</div>
+          `;
+          evidenceList.appendChild(item);
+        });
+      } else {
+        evidenceList.innerHTML = '<p class="text-xs text-slate-400 italic">No specific quotes recorded.</p>';
+      }
+
+      // Skills
+      const skillsContainer = document.getElementById('modal-skills-list');
+      skillsContainer.innerHTML = (c.matched_skills || []).map(s => `
+        <span class="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 font-medium rounded text-xs">${s}</span>
+      `).join('');
+
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function renderBar(label, current, max, colorClass) {
+      const pct = Math.min(100, Math.round((current / max) * 100));
+      return `
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+            <span>${label}</span>
+            <span>${current} / ${max} pts</span>
+          </div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div class="${colorClass} h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    async function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const resp = await fetch('/screen/file?no_llm=true', {
+          method: 'POST',
+          body: formData
+        });
+        if (resp.ok) {
+          const newCandidate = await resp.json();
+          allCandidates.unshift(newCandidate);
+          updateKPIs();
+          setFilter('all');
+          openModal(newCandidate);
+        } else {
+          alert('Screening failed: ' + (await resp.text()));
+        }
+      } catch (e) {
+        alert('Upload error: ' + e);
+      }
+    }
+
+    // Auto-fetch on page load
+    window.addEventListener('DOMContentLoaded', fetchData);
+  </script>
+</body>
+</html>

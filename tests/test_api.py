@@ -17,6 +17,18 @@ def test_health_check_endpoint():
     assert "schema_version" in data
 
 
+def test_get_dashboard_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "<!DOCTYPE html>" in response.text
+    assert "AI Resume Screener &amp; Ranking" in response.text or "AI Resume Screener" in response.text
+
+
+def test_get_summary_endpoint():
+    response = client.get("/summary")
+    assert response.status_code == 200
+
+
 def test_screen_batch_endpoint():
     payload = {
         "input_dir": str(FIXTURES_DIR),

@@ -1,10 +1,12 @@
 """FastAPI REST API endpoints for AI Resume Screening & Ranking System."""
 
 import asyncio
+import json
 from pathlib import Path
 import tempfile
 from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 from screener.config import load_config
 from screener.github.client import GitHubClient
@@ -25,9 +27,58 @@ app = FastAPI(
     version=SCHEMA_VERSION,
 )
 
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 # In-memory storage for latest batch run
 _LATEST_RESULTS: List[CandidateResult] = []
 _LATEST_SUMMARY: Optional[BatchSummary] = None
+
+
+def _load_cached_results_if_available():
+    global _LATEST_RESULTS, _LATEST_SUMMARY
+    if not _LATEST_RESULTS:
+        results_file = PROJECT_ROOT / "output" / "results.json"
+        summary_file = PROJECT_ROOT / "output" / "summary.json"
+        if results_file.is_file():
+            try:
+                with open(results_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                _LATEST_RESULTS = [CandidateResult.model_validate(r) for r in data]
+            except Exception:
+                pass
+        if summary_file.is_file():
+            try:
+                with open(summary_file, "r", encoding="utf-8") as f:
+                    sdata = json.load(f)
+                _LATEST_SUMMARY = BatchSummary.model_validate(sdata)
+            except Exception:
+                pass
+
+
+_load_cached_results_if_available()
+
+
+@app.get("/", response_class=HTMLResponse, tags=["Dashboard"])
+def get_dashboard() -> FileResponse:
+    """Serve the interactive web recruiter dashboard."""
+    index_path = STATIC_DIR / "index.html"
+    if index_path.is_file():
+        return FileResponse(index_path)
+    return HTMLResponse("<h1>Dashboard under construction</h1>")
+
+
+@app.get("/health", tags=["System"])
+def health_check() -> Dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "healthy", "schema_version": SCHEMA_VERSION}
+
+
+@app.get("/summary", tags=["System"])
+def get_summary() -> Optional[BatchSummary]:
+    """Get the batch summary of the latest screening run."""
+    _load_cached_results_if_available()
+    return _LATEST_SUMMARY
 
 
 class ScreenBatchRequest(BaseModel):
@@ -41,12 +92,6 @@ class ScreenBatchResponse(BaseModel):
     message: str
     summary: BatchSummary
     top_candidates: List[CandidateResult]
-
-
-@app.get("/health", tags=["System"])
-def health_check() -> Dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "healthy", "schema_version": SCHEMA_VERSION}
 
 
 @app.post("/screen", response_model=ScreenBatchResponse, tags=["Screening"])
