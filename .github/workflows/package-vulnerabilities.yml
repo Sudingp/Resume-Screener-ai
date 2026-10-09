@@ -1,0 +1,79 @@
+name: "Package Vulnerability Scan (Python & Node)"
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+      - 'package.json'
+      - '.github/workflows/package-vulnerabilities.yml'
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows manual click-to-run from GitHub Actions UI
+
+permissions:
+  contents: read
+
+jobs:
+  # ========================================================
+  # 1. PYTHON REQUIREMENTS VULNERABILITY AUDIT (pip-audit)
+  # ========================================================
+  python-requirements-audit:
+    name: "Python Requirements CVE Audit (pip-audit)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+
+      - name: Audit requirements.txt for known CVEs
+        run: |
+          echo "### 🐍 Python Requirements Vulnerability Audit" >> $GITHUB_STEP_SUMMARY
+          echo "Scanning \`requirements.txt\` against the Python Packaging Advisory Database..."
+          if pip-audit -r requirements.txt; then
+            echo "✅ **All Python requirements are clean! Zero known vulnerabilities found.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Vulnerabilities detected in requirements.txt**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  # ========================================================
+  # 2. NODE PACKAGES VULNERABILITY AUDIT (npm audit)
+  # ========================================================
+  node-packages-audit:
+    name: "Node Packages CVE Audit (npm audit)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Audit package.json for known vulnerabilities
+        run: |
+          echo "### 📦 Node / npm Packages Vulnerability Audit" >> $GITHUB_STEP_SUMMARY
+          npm install || true
+          echo "Running npm audit on package.json..."
+          if npm audit --audit-level=moderate; then
+            echo "✅ **All Node packages are clean! Zero known vulnerabilities found.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Vulnerabilities detected in Node packages**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
